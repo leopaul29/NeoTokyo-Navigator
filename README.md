@@ -22,6 +22,54 @@ If `py` is not available, install Python 3.11+ from [python.org](https://www.pyt
 
 The app works immediately in fallback mode. Add credentials to `.env`, restart Streamlit, then use the sidebar button to seed Qdrant and Neo4j.
 
+## Current Database Scope
+
+This is a deliberately small hackathon demo graph, not a full Tokyo or full Yamanote dataset.
+
+Current stations:
+
+- Shibuya
+- Harajuku
+- Yoyogi
+- Shinjuku
+- Shinjuku-gyoemmae
+- Asakusa
+
+Current places:
+
+- Yoyogi Park
+- Shinjuku Gyoen National Garden
+- Meiji Shrine
+- Senso-ji Temple
+- Blue Bottle Coffee Shibuya
+
+Current transit links:
+
+- Shibuya <-> Harajuku, JR Yamanote Line
+- Harajuku <-> Yoyogi, JR Yamanote Line
+- Yoyogi <-> Shinjuku, JR Yamanote Line
+- Shinjuku <-> Shinjuku-gyoemmae, Tokyo Metro Marunouchi Line
+- Shibuya <-> Asakusa, Tokyo Metro Ginza Line
+
+## Adding More Locations
+
+Add new locations in [app.py](app.py), then seed the connected databases again from the Streamlit sidebar.
+
+For each new place:
+
+1. Add it to `PLACES` with a clear `description`, `kind`, `tags`, and nearest `station_id`.
+2. If its nearest station is new, add that station to `STATIONS`.
+3. If the station is new, connect it to the route graph with one or more `TRANSIT_EDGES`.
+4. Restart Streamlit.
+5. Click `Seed connected databases`.
+
+You generally need both databases:
+
+- Qdrant stores place descriptions as embeddings, so fuzzy searches like "quiet cafe", "traditional temple", or "large park" can find the right candidates.
+- Neo4j stores stations, places, and transit links, so the app can calculate stops, transfers, and route feasibility without relying on the LLM's memory.
+
+The seed process uses upserts/`MERGE`, so it refreshes the demo records without deleting unrelated data.
+
 ## Tool Setup
 
 ### OpenAI
