@@ -1,0 +1,5 @@
+streamlit>=1.62
+openai>=1.40
+qdrant-client>=1.10
+neo4j>=5.22
+python-dotenv>=1.0
