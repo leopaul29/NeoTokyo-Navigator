@@ -621,6 +621,17 @@ def seed_neo4j() -> str:
 
 
 def neo4j_route(start_station_id: str, target_station_id: str) -> tuple[Route | None, str]:
+    if start_station_id == target_station_id:
+        return Route(
+            station_ids=[start_station_id],
+            station_names=[station_name(start_station_id)],
+            lines=[],
+            minutes=0,
+            stops=0,
+            transfers=0,
+            source="same-station route",
+        ), "Neo4j route skipped because the start and destination stations are the same."
+
     driver = neo4j_driver()
     if not driver:
         return None, "Neo4j is not configured; used local graph routing."
