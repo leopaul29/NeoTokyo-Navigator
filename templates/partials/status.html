@@ -1,0 +1,27 @@
+<div class="status-strip" x-data="{ open: false }">
+  <div class="services" aria-label="Backend status">
+    {% for name, service_status in status.items() %}
+      <span class="service-pill service-{{ service_status }}">
+        <span class="status-dot" aria-hidden="true"></span>
+        {{ name }} {{ service_status }}
+      </span>
+    {% endfor %}
+  </div>
+  <form
+    hx-post="/seed"
+    hx-target="#backend-status"
+    hx-swap="innerHTML"
+    hx-indicator="#seed-indicator"
+  >
+    <button class="seed-button" type="submit">Seed</button>
+    <span id="seed-indicator" class="mini-loader htmx-indicator" aria-live="polite">Seeding...</span>
+  </form>
+  {% if seed_messages %}
+    <button class="status-toggle" type="button" @click="open = !open" :aria-expanded="open.toString()">Log</button>
+    <div class="seed-log" x-show="open" @click.outside="open = false">
+      {% for message in seed_messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>

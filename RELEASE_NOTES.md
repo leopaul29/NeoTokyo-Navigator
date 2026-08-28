@@ -6,8 +6,18 @@ Built in 2 hours at **Fast Hacks - Hack Night - with OpenAI Codex**, Tokyo, 2026
 
 - **Qdrant** — Vector database for semantic similarity search over Tokyo points of interest.
 - **Neo4j** — Graph database modeling Tokyo subway topology for deterministic route calculation.
-- **OpenAI (GPT-4o)** — Intent extraction, query orchestration, and natural language synthesis.
-- **Streamlit** — Web interface for instant demo queries and real-time execution log visualization.
+- **OpenAI** — Intent extraction, embeddings, query orchestration, and natural language synthesis.
+- **FastAPI + Jinja2** — Server-rendered post-hackathon frontend.
+- **HTMX + Alpine.js** — Lightweight interaction without a heavy SPA framework.
+- **Streamlit** — Original fallback interface for quick local testing.
+
+## What's in v1.1.0
+
+- Added a judge-facing FastAPI frontend in `web_app.py`.
+- Added a custom Tokyo route cockpit UI with prompt, SVG transit map, best-answer panel, candidate ranking, and GraphRAG proof trail.
+- Added HTMX-powered prompt submission and seed actions, with Alpine.js used for small UI state.
+- Kept the existing Streamlit app intact as a fallback.
+- Documented the post-hackathon frontend rationale in the README appendix.
 
 ## What's in v1.0.0
 

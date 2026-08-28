@@ -1,0 +1,210 @@
+<section class="command-surface" aria-label="Navigation prompt">
+  <form
+    class="prompt-form"
+    hx-post="/navigate"
+    hx-target="#navigator-region"
+    hx-swap="innerHTML"
+    hx-indicator="#navigation-indicator"
+  >
+    <label class="prompt-label" for="prompt">Tokyo request</label>
+    <div class="prompt-row">
+      <textarea id="prompt" name="prompt" rows="2">{{ prompt }}</textarea>
+      <button class="primary-action" type="submit">Navigate</button>
+    </div>
+    {% if error %}
+      <p class="form-error" role="alert">{{ error }}</p>
+    {% endif %}
+  </form>
+
+  <div class="demo-row" aria-label="Demo prompts">
+    {% for demo in demo_prompts %}
+      <button
+        class="demo-chip"
+        type="button"
+        hx-post="/navigate"
+        hx-target="#navigator-region"
+        hx-swap="innerHTML"
+        hx-indicator="#navigation-indicator"
+        hx-vals='{"prompt": {{ demo|tojson }}}'
+      >{{ demo }}</button>
+    {% endfor %}
+  </div>
+
+  <div id="navigation-indicator" class="route-loader htmx-indicator" aria-live="polite">
+    Combining semantic search and graph routing...
+  </div>
+</section>
+
+<section class="journey-grid" aria-label="Navigation result">
+  <section class="map-panel" aria-label="Tokyo transit map">
+    <div class="map-header">
+      <div>
+        <span class="eyebrow">Verified route</span>
+        {% if result and result.best %}
+          <h1>{{ result.intent.start_station }} to {{ result.best.place.name }}</h1>
+        {% else %}
+          <h1>Route proof</h1>
+        {% endif %}
+      </div>
+      {% if result and result.route %}
+        <div class="route-summary">
+          <strong>{{ result.route.minutes }}m</strong>
+          <span>{{ result.route.stops }} stop{{ "s" if result.route.stops != 1 else "" }}</span>
+          <span>{{ result.route.transfers }} transfer{{ "s" if result.route.transfers != 1 else "" }}</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <svg class="tokyo-map" viewBox="0 0 720 430" role="img" aria-label="Metro graph and selected route">
+      <defs>
+        <filter id="route-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
+          <feMerge>
+            <feMergeNode in="blur"></feMergeNode>
+            <feMergeNode in="SourceGraphic"></feMergeNode>
+          </feMerge>
+        </filter>
+      </defs>
+
+      {% for edge in map_edges %}
+        <line
+          class="network-line"
+          x1="{{ edge.x1 }}"
+          y1="{{ edge.y1 }}"
+          x2="{{ edge.x2 }}"
+          y2="{{ edge.y2 }}"
+          stroke="{{ edge.color }}"
+        ></line>
+      {% endfor %}
+
+      {% if result and result.route_points %}
+        <polyline class="selected-route-shadow" points="{{ result.route_points }}"></polyline>
+        <polyline class="selected-route" points="{{ result.route_points }}"></polyline>
+      {% endif %}
+
+      {% for station in stations %}
+        <g class="station-node {{ 'is-active' if result and station.id in result.active_station_ids else '' }}">
+          <circle cx="{{ station.x }}" cy="{{ station.y }}" r="13"></circle>
+          <text x="{{ station.x + 18 }}" y="{{ station.y - 4 }}">{{ station.name }}</text>
+          {% if result and result.route and station.id == result.route.station_ids[0] %}
+            <text class="station-meta" x="{{ station.x + 18 }}" y="{{ station.y + 12 }}">start</text>
+          {% endif %}
+        </g>
+      {% endfor %}
+
+      {% for place in places %}
+        <g class="place-node {{ 'is-best' if result and place.id == result.active_place_id else '' }}">
+          <circle cx="{{ place.x }}" cy="{{ place.y }}" r="8"></circle>
+          {% if result and place.id == result.active_place_id %}
+            <text x="{{ place.x + 14 }}" y="{{ place.y - 5 }}">{{ place.name }}</text>
+            <text class="station-meta" x="{{ place.x + 14 }}" y="{{ place.y + 11 }}">best match</text>
+          {% endif %}
+        </g>
+      {% endfor %}
+    </svg>
+
+    <div class="line-legend" aria-label="Transit line legend">
+      {% for item in line_legend %}
+        <span style="--line-color: {{ item.color }}">
+          <i aria-hidden="true"></i>{{ item.label }}
+        </span>
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside class="answer-panel" aria-label="Best answer">
+    {% if result and result.best %}
+      <div class="destination-visual destination-{{ result.best.place.kind }}" aria-hidden="true">
+        <span></span>
+      </div>
+      <div class="answer-content">
+        <span class="eyebrow">Best answer</span>
+        <h2>{{ result.best.place.name }}</h2>
+        <p>{{ result.answer }}</p>
+
+        <div class="metric-grid">
+          <div>
+            <strong>{{ result.route.minutes }}m</strong>
+            <span>train time</span>
+          </div>
+          <div>
+            <strong>{{ result.route.stops }}</strong>
+            <span>stops</span>
+          </div>
+          <div>
+            <strong>{{ result.route.transfers }}</strong>
+            <span>transfers</span>
+          </div>
+        </div>
+
+        {% if result.best.segments %}
+          <ol class="route-steps">
+            {% for segment in result.best.segments %}
+              <li>{{ segment }}</li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <span class="eyebrow">No route</span>
+        <h2>Try a known Tokyo station</h2>
+        <p>The current demo graph covers Shibuya, Harajuku, Yoyogi, Shinjuku, Shinjuku-gyoemmae, and Asakusa.</p>
+      </div>
+    {% endif %}
+  </aside>
+</section>
+
+{% if result %}
+  <section class="proof-grid" aria-label="GraphRAG proof trail">
+    <article style="--proof-color: var(--accent-purple)">
+      <span>Intent</span>
+      <strong>{{ result.intent.start_station }}</strong>
+      <p>{{ result.intent.place_query }}</p>
+    </article>
+    <article style="--proof-color: var(--accent-green)">
+      <span>Qdrant</span>
+      <strong>{{ result.evaluated|length }} matches</strong>
+      <p>Semantic candidates ranked by vibe.</p>
+    </article>
+    <article style="--proof-color: var(--accent-red)">
+      <span>Neo4j</span>
+      <strong>{{ result.route.source if result.route else "No path" }}</strong>
+      <p>Stops and transfers checked on the graph.</p>
+    </article>
+    <article style="--proof-color: var(--accent-cyan)">
+      <span>Answer</span>
+      <strong>{{ result.best.place.name if result.best else "Pending" }}</strong>
+      <p>Natural language output grounded by both stores.</p>
+    </article>
+  </section>
+
+  <section class="candidate-panel" aria-label="Candidate ranking">
+    <div class="panel-title">
+      <h2>Candidate ranking</h2>
+      <details>
+        <summary>Trace</summary>
+        <ol class="trace-list">
+          {% for item in result.trace %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ol>
+      </details>
+    </div>
+
+    <div class="candidate-list">
+      {% for item in result.evaluated %}
+        <article class="{{ 'is-over-limit' if item.over_limit else '' }}">
+          <div>
+            <strong>{{ item.place.name }}</strong>
+            <span>{{ item.station }} · {{ item.route.minutes }}m · {{ item.route.transfers }} transfer{{ "s" if item.route.transfers != 1 else "" }}</span>
+          </div>
+          <div class="candidate-score">
+            <span>{{ item.rank }}</span>
+            <small>rank</small>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}

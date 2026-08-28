@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NeoTokyo Navigator</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+    <script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="NeoTokyo Navigator home">
+          <span class="brand-mark" aria-hidden="true">NT</span>
+          <span>
+            <strong>NeoTokyo Navigator</strong>
+            <small>Hallucination-free Tokyo routing</small>
+          </span>
+        </a>
+        <div id="backend-status">
+          {% include "partials/status.html" %}
+        </div>
+      </header>
+
+      <main id="navigator-region" class="workspace">
+        {% include "partials/navigator.html" %}
+      </main>
+    </div>
+  </body>
+</html>
